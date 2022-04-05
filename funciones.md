@@ -78,3 +78,75 @@ El tipo de otorgamiento más usado es el código de autorización, ya que ha sid
 
 ![](https://assets.digitalocean.com/articles/translateddiagrams32918/Authorization-Code-Flow-Spanish@2x.png)
 
+A continuación se encuentra una explicación más detallada de los pasos en el diagrama:
+
+La aplicación solicita autorización para acceder a los recursos de servicio del usuario
+Si el usuario autoriza la solicitud, la aplicación recibe la autorización
+La aplicación solicita al servidor de autorización (API), presentando la autenticación de su identidad y la autorización otorgada La aplicación solicita al servidor de autorización (API) un token de acceso presentando la autenticación de su propia identidad y la autorización otorgada
+Si la identidad de la aplicación es autenticada y la autorización es válida, el servidor de autorización (API) emite un token de acceso a la aplicación. La autorización finaliza
+La aplicación solicita el recurso al servidor de recursos (API) y presenta el token de acceso para autenticarse
+Si el token de acceso es válido, el servidor de recursos (API) provee el recurso a la aplicación
+El flujo real de este proceso variará dependiendo del tipo autorización que esté en uso, sin embargo, esta es la idea general. Examinaremos diferentes tipos de autorizaciones en una sección posterior.
+
+## Registro de la aplicación
+Antes de utilizar OAuth, debes registrar tu aplicación con el servicio. Esto se hace a través de un formulario de registro en la parte del “desarrollador” o “API” del sitio web del servicio, en el cual proporcionarás la siguiente información (y posiblemente detalles de tu aplicación):
+
+
+- Nombre de la aplicación
+- Sitio web de la aplicación
+- Redirect URI o Callback URL
+
+Redirect URI es donde el servicio reorientará al usuario después de que se autorice (o deniegue) su solicitud y, por consiguiente, la parte de su aplicación que manejará códigos de autorización o tokens de acceso.
+
+## Identificador del cliente y secreto de cliente.
+Una vez esté registrada tu aplicación, el servicio emitirá «credenciales del cliente» en forma de un identificador de cliente y un secreto de cliente. El identificador de cliente es una cadena pública que utiliza la API de servicio para identificar la aplicación y para generar las URL de autorización que se presentan a los usuarios.
+
+
+## Obtención de la autorización.
+En el “flujo de protocolo abstracto” presentado anteriormente, los primeros cuatro pasos abarcan la obtención de una autorización y el token de acceso. El tipo de otorgamiento de la autorización depende del método utilizado por la aplicación para solicitar dicha autorización y de los tipos de autorización soportados por la API. OAuth 2 define cuatro tipos de autorización, cada uno de los cuales es útil en casos distintos:
+- **Código de autorización**: usado con aplicaciones del lado del servidor
+- **Implícito**: utilizado con aplicaciones móviles o aplicaciones web (aplicaciones que se ejecutan en el dispositivo del usuario)
+- **Credenciales de contraseña del propietario del recurso**: utilizado con aplicaciones confiables, como aquellas pertenecientes al servicio
+- **Credenciales del cliente**: usadas con el acceso API de aplicaciones
+
+## Tipo de otorgamiento: Código de autorización.
+
+El tipo de otorgamiento más usado es el código de autorización, ya que ha sido optimizado para aplicaciones del lado del servidor, en donde el código fuente no está expuesto públicamente y se puede mantener la confidencialidad del secreto de cliente. Este es un flujo basado en la reorientación (redirection), que significa que la aplicación debe ser capaz de interactuar con el agente de usuario (i.e. el navegador web del usuario) y recibir códigos de autorización API que se enrutan a través del agente de usuario.
+
+![](https://assets.digitalocean.com/articles/translateddiagrams32918/Authorization-Code-Flow-Spanish@2x.png)
+
+### Paso 1: Enlace de código de autorización.
+Primero se le da al usuario un enlace de código de autorización similar al siguiente:
+    https://cloud.digitalocean.com/v1/oauth/authorize?response_type=code&client_id=CLIENT_ID&redirect_uri=CALLBACK_URL&scope=read
+
+A continuación se presenta una explicación de los componentes del enlace:
+
+- https://cloud.digitalocean.com/v1/oauth/authorize: El punto de conexión de la API de autorización
+- client_id=client_id: el ID de cliente (cómo la API identifica la aplicación)
+- redirect_uri=CALLBACK_URL: donde el servicio reorienta al agente-usuario después de que se otorgue un código de autorización
+- response_type=code: especifica que tu aplicación está solicitando un código de autorización
+- scope=read: especifica el nivel de acceso que la aplicación está solicitando
+
+### Paso 2: El usuario autoriza a la aplicación.
+
+Cuando el usuario hace clic en el enlace, debe primero iniciar sesión en el servicio para autenticar su identidad (a menos que ya haya iniciado sesión). Luego, el servicio solicitará autorizar o denegar el acceso de la aplicación a su cuenta. A continuación se presenta un ejemplo de solicitud de autorización:
+![](https://assets.digitalocean.com/articles/oauth/authcode.png)
+
+Esta captura específica de pantalla es de la autorización de DigitalOcean; y podemos ver que “Thedropletbook App” está solicitando autorización para el acceso de “lectura” a la cuenta de “manicas@digitalocean.com”.
+
+### Paso 3: La aplicación recibe el código de autorización.
+
+Si el usuario hace clic en “Authorize Application”, el servicio reorienta el agente-usuario al “redirect URI” de la aplicación, que se especificó durante el registro del cliente, junto con un código de autorización. La reorientación sería algo así (suponiendo que la aplicación es “dropletbook.com”):
+    https://dropletbook.com/callback?code=AUTHORIZATION_CODE
+
+### Paso 4: La aplicación solicita token de acceso.
+La aplicación solicita un token de acceso de la API, pasándole el código de autorización junto con los detalles de autenticación, incluido el secreto del cliente, a la terminal del token de la API. A continuación se presenta un ejemplo de una solicitud POST para la conexión del token de DigitalOcean:
+    https://cloud.digitalocean.com/v1/oauth/token?client_id=CLIENT_ID&client_secret=CLIENT_SECRET&grant_type=authorization_code&code=AUTHORIZATION_CODE&redirect_uri=CALLBACK_URL
+
+### Paso 5: La aplicación recibe el token de acceso.
+Si la autorización es válida, la API enviará una respuesta a la aplicación, con el token de acceso (y, opcionalmente, un token de actualización). La respuesta completa se verá más o menos así:
+```json
+{"access_token":"ACCESS_TOKEN","token_type":"bearer","expires_in":2592000,"refresh_token":"REFRESH_TOKEN","scope":"read","uid":100101,"info":{"name":"Mark E. Mark","email":"mark@thefunkybunch.com"}}
+```
+
+¡Ahora la aplicación está autorizada! Ella puede utilizar el token para acceder a la cuenta del usuario a través de la API de servicio, limitada al alcance del acceso, hasta que el token caduque o se revoque. Si se generó un token de actualización, éste se puede usar para solicitar nuevos tokens de acceso cuando el token original ha caducado.
