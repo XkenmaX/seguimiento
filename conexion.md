@@ -1,4 +1,3 @@
-# CONEXION.
 ## ¿Qué es una base de datos?
 Una base de datos es una colección organizada de información, estructurada para que se pueda acceder y gestionar fácilmente. Los datos se administran a través de un sistema de gestión de base de datos (DataBase Management System o DBMS) .
 
@@ -29,4 +28,10 @@ En esa sola línea de código realizamos todo el proceso requerido para conectar
 `"NOMBRE_DB"`: esta cambiara según el nombre de la base de datos que escojamos.
 
 
+ En este código esta les explicare lo que hace cada línea de código:
+- primero que nada, le diremos a nuestro navegador que el siguiente archivo está escrito en código php y eso es <?php y después serrando con ¿> así de simple.
+- Ahora lo que se necesita es una conexión con la base de datos par ello hay dos formas, podemos la primera es asiendo todo el proceso anterior o simplemente llamando el archivo donde está la conexión con el comando `include();` con este comando podemos llamar a archivos ya estén en la misma carpeta otro agregando su nombre o ubicación.
+- A continuación llamaremos los campos donde se ingresaron el correo y la contraseña usando el método post() reasignándole una nueva variable.
+- Una vez que le hallamos asignado variables a los capos, tendremos que enviar dichos datos a nuestra tabla para ellos usaremos la siguiente sentencia  ` INSERT INTO 'user'('Email', 'Passwor') VALUES ('[value-1]','[value-2]')` aquí le estamos diciendo que en la tabla ‘user’ hay dos columnas en el cual vamos a guardar las datos ya almacenados.
+-  Para terminar tenemos que enviar todo esto al servidor mediante el código `mysqli_query` al igual que vemos en el ejemplo en el llamamos ala variable donde emos guardado el INSERT junto con la conexión.
 
